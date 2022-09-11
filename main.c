@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-#define HEIGHT 26
+#define HEIGHT 25
 #define WIDTH 81
 
 #define H_EDGE (HEIGHT - 1)
@@ -14,18 +15,47 @@
 #define RI_VER_LINE 6
 #define RI_VOID 7
 
-void render();
-int get_item_to_render(int row, int col);
+typedef struct State {
+  int playerA_score;
+  int playerB_score;
+  int racketA_pos;
+  int racketB_pos;
+} state_t;
+
+state_t *init_state();
+void destroy_state(state_t *state);
+void render(state_t *state);
+int get_item_to_render(state_t *state, int row, int col);
 
 int main(void) {
-  render();
+  state_t *state = init_state();
+  render(state);
+  destroy_state(state);
   return 0;
 }
 
-void render() {
+state_t *init_state() {
+  state_t *state = NULL;
+
+  if((state = malloc(sizeof(state_t)))) {
+    state->playerA_score = 0;
+    state->playerB_score = 0;
+    state->racketA_pos = H_EDGE / 2;
+    state->racketB_pos = H_EDGE / 2;
+  }
+
+  return state;
+}
+
+void destroy_state(state_t *state) {
+  if (state)
+    free(state);
+}
+
+void render(state_t *state) {
   for (int i = 0; i < HEIGHT; i++) {
     for (int j = 0; j < WIDTH; j++) {
-      switch (get_item_to_render(i, j)) {
+      switch (get_item_to_render(state, i, j)) {
         case RI_BALL:         printf("o"); break;
         case RI_RACKET_LEFT:  printf("]"); break;
         case RI_RACKET_RIGHT: printf("["); break;
@@ -39,12 +69,15 @@ void render() {
   }
 }
 
-int get_item_to_render(int row, int col) {
+int get_item_to_render(state_t *state, int row, int col) {
   int item;
 
-  int vertical_racket_pos = (row == H_EDGE / 2
-    || row == H_EDGE / 2 - 1
-    || row == H_EDGE / 2 + 1);
+  int racketA_pos = (row == state->racketA_pos
+    || row == state->racketA_pos - 1
+    || row == state->racketA_pos + 1);
+  int racketB_pos = (row == state->racketB_pos
+    || row == state->racketB_pos - 1
+    || row == state->racketB_pos + 1);
   int left_corners = (row == 0
     && (col == 0 || col == W_EDGE));
   int right_corners = ( row == H_EDGE
@@ -57,9 +90,9 @@ int get_item_to_render(int row, int col) {
 
   if (row == H_EDGE / 2 && col == W_EDGE / 2)
     item = RI_BALL;
-  else if (vertical_racket_pos && col == 1)
+  else if (racketA_pos && col == 1)
     item = RI_RACKET_LEFT;
-  else if (vertical_racket_pos && col == W_EDGE - 1)
+  else if (racketB_pos && col == W_EDGE - 1)
     item = RI_RACKET_RIGHT;
   else if (left_corners || right_corners)
     item = RI_CORNER;
