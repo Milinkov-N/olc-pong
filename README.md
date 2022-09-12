@@ -1,3 +1,3 @@
-# Pong Clone
+# Old School C Pong (olc-pong)
 
-Simple pong clone written in C
+Simple pong clone written in good old C

@@ -89,7 +89,7 @@ void move_ball(state_t *state) {
 // For some unknown reason this function
 // bugs render function and in first iteration
 // render() prints garbage after each line.
-// Moving its logic directly to main loop
+// Moving key_events() logic directly to main loop
 // fixes this issue
 int key_events(state_t *state) {
   int exit_event = 1;
