@@ -27,9 +27,14 @@ typedef struct State {
   int playerB_score;
   int racketA_pos;
   int racketB_pos;
+  int ball_Xpos;
+  int ball_Ypos;
+  int ball_Xdir;
+  int ball_Ydir;
 } state_t;
 
 void run_pong(state_t *state);
+void move_ball(state_t *state);
 state_t *init_state();
 void destroy_state(state_t *state);
 void enable_vterm();
@@ -56,14 +61,49 @@ int main(void) {
 void run_pong(state_t *state) {
   while (1) {
     render(state);
+    move_ball(state);
     if (_kbhit()) {
       char ch = _getch();
       if (ch == 'q')
         break;
+
+      switch (ch) {
+        case 'a':
+          if (state->racketA_pos != 2)
+            state->racketA_pos -= 1;
+          break;
+        case 'z':
+          if (state->racketA_pos != H_EDGE - 2)
+            state->racketA_pos += 1;
+          break;
+        case 'k':
+          if (state->racketB_pos != 2)
+            state->racketB_pos -= 1;
+          break;
+        case 'm':
+          if (state->racketB_pos != H_EDGE - 2)
+            state->racketB_pos += 1;
+          break;
+      }
     }
-    Sleep(100);
+    Sleep(40);
     clear_screen();
   }
+}
+
+void move_ball(state_t *state) {
+  if (state->ball_Ypos + 1 == H_EDGE)
+    state->ball_Ydir = -1;
+  else if (state->ball_Ypos == 1)
+    state->ball_Ydir = 1;
+
+  if (state->ball_Xpos + 1 == W_EDGE)
+    state->ball_Xdir = -1;
+  else if (state->ball_Xpos == 1)
+    state->ball_Xdir = 1;
+
+  state->ball_Xpos += state->ball_Xdir;
+  state->ball_Ypos += state->ball_Ydir;
 }
 
 state_t *init_state() {
@@ -74,6 +114,10 @@ state_t *init_state() {
     state->playerB_score = 0;
     state->racketA_pos   = H_EDGE / 2;
     state->racketB_pos   = H_EDGE / 2;
+    state->ball_Xpos     = W_EDGE / 2;
+    state->ball_Ypos     = H_EDGE / 2;
+    state->ball_Xdir     = 1;
+    state->ball_Ydir     = 1;
   }
 
   return state;
@@ -145,7 +189,7 @@ int get_item_to_render(state_t *state, int row, int col) {
     || col == W_EDGE
     || col == WIDTH / 2);
 
-  if (row == H_EDGE / 2 && col == W_EDGE / 2)
+  if (row == state->ball_Ypos && col == state->ball_Xpos)
     item = RI_BALL;
   else if (racketA_pos && col == 1)
     item = RI_RACKET_LEFT;
