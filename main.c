@@ -35,6 +35,7 @@ typedef struct State {
 
 void run_pong(state_t *state);
 void move_ball(state_t *state);
+int key_events(state_t *state);
 state_t *init_state();
 void destroy_state(state_t *state);
 void enable_vterm();
@@ -52,6 +53,7 @@ int main(void) {
     hide_cursor();
     run_pong(state);
     show_cursor();
+    clear_screen();
     destroy_state(state);
   }
 
@@ -62,30 +64,8 @@ void run_pong(state_t *state) {
   while (1) {
     render(state);
     move_ball(state);
-    if (_kbhit()) {
-      char ch = _getch();
-      if (ch == 'q')
-        break;
-
-      switch (ch) {
-        case 'a':
-          if (state->racketA_pos != 2)
-            state->racketA_pos -= 1;
-          break;
-        case 'z':
-          if (state->racketA_pos != H_EDGE - 2)
-            state->racketA_pos += 1;
-          break;
-        case 'k':
-          if (state->racketB_pos != 2)
-            state->racketB_pos -= 1;
-          break;
-        case 'm':
-          if (state->racketB_pos != H_EDGE - 2)
-            state->racketB_pos += 1;
-          break;
-      }
-    }
+    if (!key_events(state))
+      break;
     Sleep(40);
     clear_screen();
   }
@@ -104,6 +84,41 @@ void move_ball(state_t *state) {
 
   state->ball_Xpos += state->ball_Xdir;
   state->ball_Ypos += state->ball_Ydir;
+}
+
+// For some unknown reason this function
+// bugs render function and in first iteration
+// render() prints garbage after each line.
+// Moving its logic directly to main loop
+// fixes this issue
+int key_events(state_t *state) {
+  int exit_event = 1;
+  if (_kbhit()) {
+    char ch = _getch();
+    if (ch == 'q')
+      exit_event = 0;
+
+    switch (ch) {
+      case 'a':
+        if (state->racketA_pos != 2)
+          state->racketA_pos -= 1;
+        break;
+      case 'z':
+        if (state->racketA_pos != H_EDGE - 2)
+          state->racketA_pos += 1;
+        break;
+      case 'k':
+        if (state->racketB_pos != 2)
+          state->racketB_pos -= 1;
+        break;
+      case 'm':
+        if (state->racketB_pos != H_EDGE - 2)
+          state->racketB_pos += 1;
+        break;
+    }
+  }
+
+  return exit_event;
 }
 
 state_t *init_state() {
@@ -165,8 +180,11 @@ void render(state_t *state) {
 }
 
 void clear_screen() {
-  for (int i = 0; i < HEIGHT; i++)
-    printf("\x1b[2K\x1b[1A");
+  for (int i = 0; i <= HEIGHT; i++) {
+    printf("\x1b[2K");
+    if (i != HEIGHT)
+      printf("\x1b[1A");
+  }
   printf("\r");
 }
 
