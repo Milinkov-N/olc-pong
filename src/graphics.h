@@ -16,7 +16,7 @@
 #define RI_VOID 9
 
 void render(state_t *state);
+void print_final_screen(state_t *state);
 void clear_screen();
-int get_item_to_render(state_t *state, int row, int col);
 
 #endif  // OLC_PONG_GRAPHICS_H_
