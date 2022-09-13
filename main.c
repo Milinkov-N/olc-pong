@@ -37,6 +37,9 @@ void run_pong(state_t *state);
 void move_ball(state_t *state);
 int key_events(state_t *state);
 state_t *init_state();
+int is_racketA_pos(state_t *state, int row);
+int is_racketB_pos(state_t *state, int row);
+void reset_ball_pos(state_t *state);
 void destroy_state(state_t *state);
 void enable_vterm();
 void hide_cursor();
@@ -78,9 +81,17 @@ void move_ball(state_t *state) {
     state->ball_Ydir = 1;
 
   if (state->ball_Xpos + 1 == W_EDGE)
-    state->ball_Xdir = -1;
-  else if (state->ball_Xpos == 1)
+    reset_ball_pos(state);
+  else if (state->ball_Xpos - 1 == 1
+    && is_racketA_pos(state, state->ball_Ypos))
     state->ball_Xdir = 1;
+  else if (state->ball_Xpos == 1)
+    reset_ball_pos(state);
+  else if (state->ball_Xpos + 1 == W_EDGE - 1
+    && is_racketB_pos(state, state->ball_Ypos))
+    state->ball_Xdir = -1;
+  else if (state->ball_Xpos == W_EDGE)
+    reset_ball_pos(state);
 
   state->ball_Xpos += state->ball_Xdir;
   state->ball_Ypos += state->ball_Ydir;
@@ -131,8 +142,8 @@ state_t *init_state() {
     state->racketB_pos   = H_EDGE / 2;
     state->ball_Xpos     = W_EDGE / 2;
     state->ball_Ypos     = H_EDGE / 2;
-    state->ball_Xdir     = 1;
-    state->ball_Ydir     = 1;
+    state->ball_Xdir     = -1;
+    state->ball_Ydir     = -1;
   }
 
   return state;
@@ -141,6 +152,23 @@ state_t *init_state() {
 void destroy_state(state_t *state) {
   if (state)
     free(state);
+}
+
+int is_racketA_pos(state_t *state, int row) {
+  return (row == state->racketA_pos
+    || row == state->racketA_pos - 1
+    || row == state->racketA_pos + 1);
+}
+
+int is_racketB_pos(state_t *state, int row) {
+  return (row == state->racketB_pos
+    || row == state->racketB_pos - 1
+    || row == state->racketB_pos + 1);
+}
+
+void reset_ball_pos(state_t *state) {
+  state->ball_Xpos = W_EDGE / 2;
+  state->ball_Ypos = H_EDGE / 2;  
 }
 
 void enable_vterm() {
@@ -175,7 +203,7 @@ void render(state_t *state) {
         case RI_VOID:         line_buf[j] = ' '; break;
       }
     }
-    printf("%s\r\n", line_buf);
+    printf("%s\n", line_buf);
   }
 }
 
