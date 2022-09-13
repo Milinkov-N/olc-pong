@@ -17,10 +17,12 @@
 #define RI_BALL 1
 #define RI_RACKET_LEFT 2
 #define RI_RACKET_RIGHT 3
-#define RI_CORNER 4
-#define RI_HOR_LINE 5
-#define RI_VER_LINE 6
-#define RI_VOID 7
+#define RI_SCORE_PLAYER_A 4
+#define RI_SCORE_PLAYER_B 5
+#define RI_CORNER 6
+#define RI_HOR_LINE 7
+#define RI_VER_LINE 8
+#define RI_VOID 9
 
 typedef struct State {
   int playerA_score;
@@ -64,12 +66,20 @@ int main(void) {
 }
 
 void run_pong(state_t *state) {
+  int skipped_frames = 0;
   while (1) {
     render(state);
-    move_ball(state);
-    if (!key_events(state))
+    if (skipped_frames != 2) {
+      skipped_frames++;
+    } else {
+      move_ball(state);
+      skipped_frames = 0;
+    }
+    if (!key_events(state)
+      || state->playerA_score == 9
+      || state->playerB_score == 9)
       break;
-    Sleep(40);
+    Sleep(20);
     clear_screen();
   }
 }
@@ -80,18 +90,19 @@ void move_ball(state_t *state) {
   else if (state->ball_Ypos == 1)
     state->ball_Ydir = 1;
 
-  if (state->ball_Xpos + 1 == W_EDGE)
-    reset_ball_pos(state);
   else if (state->ball_Xpos - 1 == 1
-    && is_racketA_pos(state, state->ball_Ypos))
+    && is_racketA_pos(state, state->ball_Ypos)) {
     state->ball_Xdir = 1;
-  else if (state->ball_Xpos == 1)
+  } else if (state->ball_Xpos == 1) {
     reset_ball_pos(state);
-  else if (state->ball_Xpos + 1 == W_EDGE - 1
-    && is_racketB_pos(state, state->ball_Ypos))
+    state->playerB_score++;
+  } else if (state->ball_Xpos + 1 == W_EDGE - 1
+    && is_racketB_pos(state, state->ball_Ypos)) {
     state->ball_Xdir = -1;
-  else if (state->ball_Xpos == W_EDGE)
+  } else if (state->ball_Xpos + 1 == W_EDGE) {
     reset_ball_pos(state);
+    state->playerA_score++;
+  }
 
   state->ball_Xpos += state->ball_Xdir;
   state->ball_Ypos += state->ball_Ydir;
@@ -196,11 +207,17 @@ void render(state_t *state) {
       switch (get_item_to_render(state, i, j)) {
         case RI_BALL:         line_buf[j] = 'o'; break;
         case RI_RACKET_LEFT:  line_buf[j] = ']'; break;
-        case RI_RACKET_RIGHT: line_buf[j] = '['; break;
+        case RI_RACKET_RIGHT: line_buf[j] = '['; break; 
         case RI_CORNER:       line_buf[j] = '+'; break;
         case RI_HOR_LINE:     line_buf[j] = '-'; break;
         case RI_VER_LINE:     line_buf[j] = '|'; break;
         case RI_VOID:         line_buf[j] = ' '; break;
+        case RI_SCORE_PLAYER_A:
+          line_buf[j] = state->playerA_score + 48;
+          break;
+        case RI_SCORE_PLAYER_B:
+          line_buf[j] = state->playerB_score + 48;
+          break;
       }
     }
     printf("%s\n", line_buf);
@@ -241,6 +258,10 @@ int get_item_to_render(state_t *state, int row, int col) {
     item = RI_RACKET_LEFT;
   else if (racketB_pos && col == W_EDGE - 1)
     item = RI_RACKET_RIGHT;
+  else if (row == 1 && col == W_EDGE / 2 - 2)
+    item = RI_SCORE_PLAYER_A;
+  else if (row == 1 && col == W_EDGE / 2 + 2)
+    item = RI_SCORE_PLAYER_B;
   else if (left_corners || right_corners)
     item = RI_CORNER;
   else if ((row == 0 && hor_in_field)
