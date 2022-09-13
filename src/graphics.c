@@ -1,5 +1,7 @@
 #include "graphics.h"
 
+int get_item_to_render(state_t *state, int row, int col);
+
 void render(state_t *state) {
   for (int i = 0; i < HEIGHT; i++) {
     char line_buf[WIDTH] = {0};
@@ -22,12 +24,27 @@ void render(state_t *state) {
     }
     printf("%s\n", line_buf);
   }
+  printf("CONTROLS:\n");
+  printf("  'a' and 'z' to move left racket\n");
+  printf("  'k' and 'm' to move right racket\n");
+  printf("  'q' to quit");
+}
+
+void print_final_screen(state_t *state) {
+  if (state->playerA_score > 0
+    || state->playerB_score > 0) {
+    printf("\x1b[22;37mGAME OVER! \x1b[0m");
+    if (state->playerA_score == 9)
+      printf("\x1b[36mPlayer A\x1b[0m wins!\n");
+    else if (state->playerB_score == 9)
+      printf("\x1b[35mPlayer B\x1b[0m wins!\n"); 
+  }
 }
 
 void clear_screen() {
-  for (int i = 0; i <= HEIGHT; i++) {
+  for (int i = 0; i <= HEIGHT + 3; i++) {
     printf("\x1b[2K");
-    if (i != HEIGHT)
+    if (i != HEIGHT + 3)
       printf("\x1b[1A");
   }
   printf("\r");

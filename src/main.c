@@ -18,6 +18,7 @@ int main(void) {
     run_pong(state);
     show_cursor();
     clear_screen();
+    print_final_screen(state);
     destroy_state(state);
   }
 
@@ -43,11 +44,6 @@ void run_pong(state_t *state) {
   }
 }
 
-// For some unknown reason this function
-// bugs render function and in first iteration
-// render() prints garbage after each line.
-// Moving key_events() logic directly to main loop
-// fixes this issue
 int key_events(state_t *state) {
   int exit_event = 1;
   if (_kbhit()) {
